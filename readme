@@ -1,0 +1,15 @@
+1) 权限控制方案为：
+If( 页面添加了<accesscontrol>权限控制){
+     If( <accesscontrol>标签中有_anonymous_ ){
+              允许访问该页面(不登陆可只读访问);
+     }
+     If(<accesscontrol>标签中有当前登陆用户所在组){
+              允许当前用户访问该页面;
+     }else{
+              禁止当前用户访问该页面;
+     }
+}else{
+     允许访问该页面(不登陆可只读访问);
+}
+
+2) 标签格式：<accesscontrol>bizop,bizqa</accesscontrol>
