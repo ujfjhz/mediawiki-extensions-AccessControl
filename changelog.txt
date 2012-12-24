@@ -1,3 +1,6 @@
+version 3.4
+* modified for sogou.biztech
+
 version 2.1
 * Fixed security problem with insert protected page, or template
 

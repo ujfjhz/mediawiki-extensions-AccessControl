@@ -4,10 +4,13 @@
  * basis contributed by Martin Mueller (http://blog.pagansoft.de) based into 
  * version 1.3 on accesscontrol.php by Josh Greenberg.
  * Version 2.0 for MediaWiki >= 1.18 rewrited completly by Aleš Kapica.
+ * Version 3.4 for MediaWiki >= 1.19 . Modified by shanhongjie@sogou-inc.com in order to used it independent on the group page.
+ * Usage:<accesscontrol>biztech, bizop </accesscontrol>
  * @package MediaWiki
  * @subpackage Extensions
  * @author Aleš Kapica
  * @copyright 2008-2012 Aleš Kapica
+ * @modified by shanhongjie@sogou-inc.com,2012-12-24
  * @licence GNU General Public Licence
  */
 
@@ -21,10 +24,10 @@ $wgAdminCanReadAll = true;
 
 $wgExtensionCredits['specialpage']['AccessControl'] = array(
 	'name'                  => 'AccessControlExtension',
-	'author'                => array( 'Aleš Kapica' ),
-	'url'                   => 'http://www.mediawiki.org/wiki/Extension:AccessControl',
-	'version'               => '2.1',
-	'description'           => 'Access control based on users lists. Administrator rights need not be for it.',
+	'author'                => array( 'shanhongjie@sogou-inc.com' ),
+	'url'                   => 'git://github.com/ujfjhz/mediawiki-extensions-AccessControl.git',
+	'version'               => '3.4',
+	'description'           => 'Access control based on users with group info. Administrator rights need not be for it.',
 	'descriptionmsg'        => 'accesscontrol-desc',
 );
 
@@ -37,6 +40,7 @@ $wgExtensionMessagesFiles['AccessControl'] = $dir . 'AccessControl.i18n.php';
 //Hook the userCan function for bypassing the cache
 $wgHooks['userCan'][] = 'hookUserCan';
 
+
 function wfAccessControlExtension( Parser $parser ) {
 	/* This the hook function adds the tag <accesscontrol> to the wiki parser */
 	$parser->setHook( "accesscontrol", "doControlUserAccess" );
@@ -48,6 +52,7 @@ function doControlUserAccess( $input, array $args, Parser $parser, PPFrame $fram
 	return displayGroups();
 }
 
+#obsahtagu(the content of tag(slovak))
 function accessControl( $obsahtagu ){
 	$accessgroup = Array( Array(), Array() );
 	$listaccesslist = explode( ",", $obsahtagu );
@@ -257,7 +262,6 @@ function allRightTags( $string ) {
 		$gt = $Title->makeTitle( 0, $redirecttarget );
 		return allRightTags( getContentPage( $gt ) );
 	}
-
 	// Kontrola accesscontrol ve vložených šablonách a stránkách
 	fromTemplates($string);
 
@@ -292,22 +296,17 @@ function allRightTags( $string ) {
 function hookUserCan( &$title, &$wgUser, $action, &$result ) {
 	/* Main function control access for all users */
 	global $wgActions, $wgAdminCanReadAll;
-	if ( $wgUser->mId === 0 ) {
-		/* Deny actions for all anonymous */
-		$wgActions['edit']           = false;
-		$wgActions['history']        = false;
-		$wgActions['submit']         = false;
-		$wgActions['info']           = false;
-		$wgActions['raw']            = false;
-		$wgActions['delete']         = false;
-		$wgActions['revert']         = false;
-		$wgActions['revisiondelete'] = false;
-		$wgActions['rollback']       = false;
-		$wgActions['markpatrolled']  = false;
-		}
-
 	$rights = allRightTags( getContentPage( $title->mDbkeyform ) );
+
 	if ( is_array( $rights ) ) {
+#added by shanhongjie@sogou-inc.com
+	$restrictGrouplist=explode(',',$rights['groups']);
+	foreach($restrictGrouplist as $restrictGroup){
+		if ( $restrictGroup == "_anonymous_") {
+			return true;
+		}
+	}
+
 		if ( $wgUser->mId === 0 ) {
 			/* Redirection unknown users */
 			$wgActions['view'] = false;
@@ -320,29 +319,24 @@ function hookUserCan( &$title, &$wgUser, $action, &$result ) {
 					}
 				}
 			}				
-			$users = accessControl( $rights['groups'] );
-			if ( in_array( $wgUser->mName, $users[0], true ) ) {
-				return true;
-			} else {
-				$wgActions['edit']           = false;
-				$wgActions['history']        = false;
-				$wgActions['submit']         = false;
-				$wgActions['info']           = false;
-				$wgActions['raw']            = false;
-				$wgActions['delete']         = false;
-				$wgActions['revert']         = false;
-				$wgActions['revisiondelete'] = false;
-				$wgActions['rollback']       = false;
-				$wgActions['markpatrolled']  = false;
-				if ( in_array( $wgUser->mName, $users[1], true ) ) {
-					return true;
-				} else {
-					$wgActions['view']   = false;
-					return doRedirect( 'accesscontrol-info-anonymous' );
-				}
-			}
+
+	foreach($restrictGrouplist as $restrictGroup){
+		//TODO ro,rw,etc
+		if ( in_array( trim($restrictGroup),$wgUser->mGroups, true ) ) {
+			return true;
+		}
+	}
+	$wgActions['view'] = false;
+	doRedirect( 'accesscontrol-info-anonymous' );
 		}
 	} else {
+#		if ( $wgUser->mId === 0 && $title->mNamespace === 0 ) {
+#			/* Redirection:when unknown users in 0 mNamespace without _anonymous_ promise */
+#			$wgActions['view'] = false;
+#			doRedirect( 'accesscontrol-info-anonymous' );
+#		}else{
+#			return true;
+#		}
 		return true;
 	}
 }
