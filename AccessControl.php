@@ -106,8 +106,10 @@ function getContentPage( $title ) {
 	$Title = new Title();
 	$gt = $Title->makeTitle( 0, $title );
 	// create Article and get the content
-	$contentPage = new Article( $gt, 0 );
-	return $contentPage->fetchContent( 0 );
+	#$contentPage = new Article( $gt, 0 );
+	#return $contentPage->fetchContent( 0 );
+	$contentPage = new WikiPage( $gt );
+	return $contentPage->getContent();
 	}
 
 function getTemplatePage( $template ) {
@@ -118,8 +120,10 @@ function getTemplatePage( $template ) {
 	//print_r($gt);
 	//echo '-->';
 	// create Article and get the content
-	$contentPage = new Article( $gt, 0 );
-	return $contentPage->fetchContent( 0 );
+	#$contentPage = new Article( $gt, 0 );
+	#return $contentPage->fetchContent( 0 );
+	$contentPage = new WikiPage( $gt );
+	return $contentPage->getContent();
 	}
 
 function getUsersFromPages( $skupina ) {
@@ -129,8 +133,10 @@ function getUsersFromPages( $skupina ) {
 	$Title = new Title();
 	$gt = $Title->makeTitle( 0, $skupina );
 	// create Article and get the content
-	$groupPage = new Article( $gt, 0 );
-	$allowedUsers = $groupPage->fetchContent( 0 );
+	#$groupPage = new Article( $gt, 0 );
+	#$allowedUsers = $groupPage->fetchContent( 0 );
+	$groupPage = new WikiPage( $gt );
+	$allowedUsers = $groupPage->getContent();
 	$groupPage = NULL;
 	$usersAccess = explode( "\n", $allowedUsers );
 	foreach  ($usersAccess as $userEntry ) {
